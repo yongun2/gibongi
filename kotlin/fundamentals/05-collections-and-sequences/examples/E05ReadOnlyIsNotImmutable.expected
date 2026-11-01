@@ -1,0 +1,17 @@
+== 1. 팩토리 함수가 실제로 만드는 클래스 ==
+  emptyList()              → kotlin.collections.EmptyList
+  listOf(1)                → java.util.Collections$SingletonList
+  listOf(1, 2, 3)          → java.util.Arrays$ArrayList
+  mutableListOf(1)         → java.util.ArrayList
+  List(3) { it }           → java.util.ArrayList
+  buildList { add(1) }     → kotlin.collections.builders.ListBuilder
+  (1..3).toList()          → java.util.ArrayList
+  listOf(1,2).map { it }   → java.util.ArrayList
+== 2. List 로 받았는데 바뀐다 ==
+  listOf 결과에 set: [100, 2, 3]
+  add 는? UnsupportedOperationException
+  view 는 원본의 변경을 그대로 본다: [a, b]
+== 3. Java 코드는 Kotlin의 읽기 전용 타입을 모른다 ==
+  Java 호출 후: [kim, lee]
+== 4. 방어적 복사 vs 읽기 전용 뷰 ==
+  toList() 복사본: [1, 2], unmodifiableList 뷰: [1, 2, 3]

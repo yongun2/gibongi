@@ -1,0 +1,11 @@
+== 1. first{} ==
+  Iterable: map 1000회
+  Sequence: map 8회
+== 2. 중간의 sorted() ==
+  before(3) before(1) before(2) after(1)
+== 3. 무한 시퀀스 ==
+  2의 거듭제곱 중 1000 초과 첫 5개: [1024, 2048, 4096, 8192, 16384]
+== 4. 한 번만 순회 가능한 Sequence ==
+  첫 순회: [a, b]
+  두 번째 순회: IllegalStateException: This sequence can be consumed only once.
+  List.asSequence()는 재순회 가능: [a, b] [a, b]

@@ -1,0 +1,14 @@
+== 1. Iterable: filter 9번이 전부 끝난 뒤에야 map이 시작된다 ==
+  f(The) f(quick) f(brown) f(fox) f(jumps) f(over) f(the)
+  f(lazy) f(dog) m(quick) m(brown) m(jumps) m(over) m(lazy)
+  filter 9회, map 5회 → [5, 5, 5, 4]
+== 2. Sequence: 터미널 연산 전에는 아무것도 실행되지 않는다 ==
+  toList() 호출 전 람다 호출 수: 0
+  pipeline 객체: TakeSequence
+  f(The) f(quick) m(quick) f(brown) m(brown) f(fox) f(jumps)
+  m(jumps) f(over) m(over)
+  filter 6회, map 4회 → [5, 5, 5, 4]
+== 3. Java Stream: Sequence와 같은 순서, limit에서 멈춘다 ==
+  f(The) f(quick) m(quick) f(brown) m(brown) f(fox) f(jumps)
+  m(jumps) f(over) m(over)
+  filter 6회, map 4회 → [5, 5, 5, 4]

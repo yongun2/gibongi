@@ -1,0 +1,26 @@
+== Kotlin (E02BytecodeShapeKt) ==
+  sumEvenSquaresLoop
+    new          : (없음)
+    invokedynamic: (없음)
+    calls        : Intrinsics.checkNotNullParameter, List.iterator, Iterator.hasNext, Iterator.next, Number.intValue
+  sumEvenSquaresIterable
+    new          : ArrayList, ArrayList
+    invokedynamic: (없음)
+    calls        : Intrinsics.checkNotNullParameter, ArrayList.<init>, Iterable.iterator, Iterator.hasNext, Iterator.next, Number.intValue, Collection.add, CollectionsKt.collectionSizeOrDefault, Long.valueOf, CollectionsKt.sumOfLong
+  sumEvenSquaresSequence
+    new          : (없음)
+    invokedynamic: LambdaMetafactory.metafactory, LambdaMetafactory.metafactory
+    calls        : Intrinsics.checkNotNullParameter, CollectionsKt.asSequence, SequencesKt.filter, SequencesKt.map, SequencesKt.sumOfLong
+  sumEvenSquaresStreamFromKotlin
+    new          : (없음)
+    invokedynamic: LambdaMetafactory.metafactory, LambdaMetafactory.metafactory, LambdaMetafactory.metafactory, LambdaMetafactory.metafactory
+    calls        : Intrinsics.checkNotNullParameter, List.stream, Stream.filter, Stream.mapToLong, LongStream.sum
+== Java (JavaPipelines) ==
+  sumEvenSquaresLoop
+    new          : (없음)
+    invokedynamic: (없음)
+    calls        : List.iterator, Iterator.hasNext, Iterator.next, Integer.intValue
+  sumEvenSquaresStream
+    new          : (없음)
+    invokedynamic: LambdaMetafactory.metafactory, LambdaMetafactory.metafactory
+    calls        : List.stream, Stream.filter, Stream.mapToLong, LongStream.sum

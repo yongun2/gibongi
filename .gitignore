@@ -1,0 +1,22 @@
+# OS · IDE
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Go
+*.test
+*.prof
+*.pprof
+
+# Kotlin · Gradle
+.gradle/
+.kotlin/
+build/
+
+# Python
+.venv*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/

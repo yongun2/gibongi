@@ -1,0 +1,5 @@
+# 저장소에서 쓰는 도구 버전. `mise install` 한 번이면 맞춰진다.
+# JDK는 여기서 관리하지 않는다: Kotlin 빌드(Gradle toolchain)가 로컬에 설치된 JDK 25(14장은 17·25·26)를 찾아 쓴다.
+[tools]
+go = "1.27.1"
+python = "3.15.2"

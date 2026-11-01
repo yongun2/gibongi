@@ -1,0 +1,22 @@
+[project]
+name = "gibongi-python"
+version = "0.0.0"
+description = "Python 기본기 학습 저장소 (배포하지 않음)"
+requires-python = ">=3.15"
+dependencies = []            # 런타임 의존성 없음: 표준 라이브러리만
+
+[dependency-groups]          # PEP 735. 설치: .venv/bin/python -m pip install --group dev
+test = ["pytest==9.2.0"]     # free-threaded venv(.venv-ft)에는 이것만
+dev = [
+    {include-group = "test"},
+    "mypy==2.4.1",
+]
+
+[tool.pytest]                # pytest 9의 네이티브 TOML 설정
+python_files = ["test_*.py"]
+addopts = ["-ra", "--strict-markers"]
+testpaths = ["fundamentals", "projects"]
+
+[tool.mypy]
+python_version = "3.15"
+strict = true

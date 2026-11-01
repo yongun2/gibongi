@@ -1,0 +1,11 @@
+원소당 할당 바이트 (N = 1000000)
+  for 루프 (IntArray)                 0.0 B
+  for 루프 (List<Int>)                0.0 B
+  Iterable filter→map→sum          16.5 B
+  Sequence filter→map→sum           8.0 B
+  IntArray.filter→map→sum          24.5 B
+  IntArray.sumOf (inline)           0.0 B
+  Stream<Integer> (Kotlin 람다)       8.0 B
+  Stream<Integer> (SAM 생성자)         0.0 B
+  Stream<Integer> (Java 코드)         0.0 B
+  Java IntStream                    0.0 B

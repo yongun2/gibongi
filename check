@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+# gibongi 공통 검증 스크립트
+#
+#   ./check <go|kotlin|python> <NN|all> [examples|exercises] [언어별 옵션...]
+#   ./check <go|kotlin|python> project <name> [언어별 옵션...]
+#
+#   종료 코드: 0 통과 · 1 실패 · 2 사용법/환경 오류
+#
+#   언어별 옵션
+#     go      --race  --bench  -run <정규식>  -v
+#     kotlin  examples <예제이름> · exercises <테스트이름> · javap <FQCN> · update-golden
+#     python  나머지 인자를 pytest에 그대로 넘긴다 (예: -k 이름 -x). PY=<인터프리터>로 교체 가능
+set -uo pipefail
+root=$(cd "$(dirname "$0")" && pwd)
+
+usage() { sed -n '2,13p' "$0" | sed -E 's/^# ?//' >&2; exit 2; }
+die() { echo "check: $*" >&2; exit 2; }
+
+# <lang>/fundamentals/NN-* 디렉터리 (상대 경로)
+section_dir() {
+  local d
+  d=$(cd "$root/$1" && ls -d fundamentals/"$2"-*/ 2>/dev/null | head -1)
+  [[ -n $d ]] || { echo "check: $1/fundamentals/$2-* 없음" >&2; return 2; }
+  echo "${d%/}"
+}
+require_material() {
+  [[ -d $root/$1/$2/examples || -d $root/$1/$2/exercises ]] ||
+    die "$1/$2 는 아직 설계 초안(README)만 있다"
+}
+
+run_go() { # kind value [mode] [opts]
+  local kind=$1 value=$2; shift 2
+  local mode=all race=0 bench=0 run="" verbose="" dir pkgs=()
+  if [[ ${1:-} == examples || ${1:-} == exercises ]]; then mode=$1; shift; fi
+  while (($#)); do
+    case $1 in
+      --race) race=1 ;;
+      --bench) bench=1 ;;
+      -run) (($# >= 2)) || die "-run 뒤에 정규식이 필요하다"; run=$2; shift ;;
+      -v) verbose=-v ;;
+      *) die "go: 알 수 없는 옵션 $1" ;;
+    esac
+    shift
+  done
+  cd "$root/go" || die "go/ 없음"
+  case $kind in
+    section)
+      dir=$(section_dir go "$value") || exit 2
+      require_material go "$dir"
+      [[ -f $dir/.race ]] && race=1 # 동시성 섹션은 항상 -race
+      if [[ $mode == all ]]; then pkgs=("./$dir/..."); else pkgs=("./$dir/$mode"); fi ;;
+    all)
+      if [[ $mode == all ]]; then pkgs=(./fundamentals/...); else pkgs=("./fundamentals/.../$mode"); fi ;;
+    project)
+      [[ -d projects/$value ]] || die "go/projects/$value 없음"
+      pkgs=("./projects/$value/...") ;;
+  esac
+  local args=(-count=1)
+  [[ -n $verbose ]] && args+=("$verbose")
+  ((race)) && args+=(-race)
+  [[ -n $run ]] && args+=(-run "$run")
+  go vet "${pkgs[@]}" || return 1
+  go test "${args[@]}" "${pkgs[@]}" || return 1
+  if ((bench)); then go test -run '^$' -bench . -benchmem "${pkgs[@]}" || return 1; fi
+}
+
+run_kotlin() { # kind value [mode] [arg]
+  local kind=$1 value=$2; shift 2
+  local mode=${1:-all} arg=${2:-} dir path=""
+  cd "$root/kotlin" || die "kotlin/ 없음"
+  case $kind in
+    section)
+      dir=$(section_dir kotlin "$value") || exit 2
+      require_material kotlin "$dir"
+      [[ -f $dir/build.gradle.kts ]] || die "kotlin/$dir/build.gradle.kts 없음"
+      path=":fundamentals:${dir#fundamentals/}" ;;
+    project)
+      [[ -f projects/$value/build.gradle.kts ]] || die "kotlin/projects/$value/build.gradle.kts 없음"
+      path=":projects:$value" ;;
+  esac
+  local task extra=()
+  case $mode in
+    all) task=verifySection ;;
+    examples) task=verifyExamples; [[ -n $arg ]] && extra=(--only="$arg") ;;
+    exercises) task=test; [[ -n $arg ]] && extra=(--tests="*$arg*") ;;
+    update-golden) task=verifyExamples; extra=(-PupdateGolden) ;;
+    javap)
+      [[ -n $path ]] || die "javap는 섹션을 지정해야 한다"
+      [[ -n $arg ]] || die "javap 뒤에 클래스 이름(FQCN)이 필요하다"
+      ./gradlew -q "$path:javap" --class="$arg" || return 1
+      return 0 ;;
+    *) die "kotlin: 알 수 없는 모드 $mode" ;;
+  esac
+  # ${extra[@]+...}: bash 3.2(macOS 기본)에서 set -u + 빈 배열을 펼치면 오류가 나서
+  ./gradlew --continue "${path:+$path:}$task" ${extra[@]+"${extra[@]}"} || return 1
+}
+
+run_python() { # kind value [mode] [pytest opts]
+  local kind=$1 value=$2; shift 2
+  local py=${PY:-$root/python/.venv/bin/python} mode=all dir paths=() typed=()
+  [[ -x $py ]] || die "python/.venv 가 없다. python/README.md 의 '환경 구성'을 먼저 실행하자"
+  if [[ ${1:-} == examples || ${1:-} == exercises ]]; then mode=$1; shift; fi
+  cd "$root/python" || die "python/ 없음"
+  case $kind in
+    section)
+      dir=$(section_dir python "$value") || exit 2
+      require_material python "$dir"
+      if [[ $mode == all ]]; then paths=("$dir"); else paths=("$dir/$mode"); fi
+      # 11장(타입 힌트)부터는 실습 코드에 mypy --strict도 건다
+      if ((10#$value >= 11)) && [[ $mode != examples && -d $dir/exercises ]]; then typed=("$dir/exercises"); fi ;;
+    all)
+      for dir in fundamentals/[0-9][0-9]-*; do
+        [[ -d $dir/examples || -d $dir/exercises ]] || continue
+        if [[ $mode == all ]]; then paths+=("$dir"); elif [[ -d $dir/$mode ]]; then paths+=("$dir/$mode"); fi
+        local n=${dir#fundamentals/}; n=${n%%-*}
+        if ((10#$n >= 11)) && [[ $mode != examples && -d $dir/exercises ]]; then typed+=("$dir/exercises"); fi
+      done
+      ((${#paths[@]})) || die "python: 검증할 자료가 있는 섹션이 없다" ;;
+    project)
+      [[ -d projects/$value ]] || die "python/projects/$value 없음"
+      paths=("projects/$value") ;;
+  esac
+  local rc=0
+  "$py" -m pytest "${paths[@]}" "$@"
+  case $? in 0) ;; 1) rc=1 ;; *) return 2 ;; esac
+  if ((${#typed[@]})); then "$py" -m mypy "${typed[@]}" || rc=1; fi
+  return $rc
+}
+
+(($# >= 2)) || usage
+lang=$1 target=$2
+shift 2
+case $target in
+  all) kind=all value="" ;;
+  project) (($# >= 1)) || die "project 뒤에 이름이 필요하다"; kind=project value=$1; shift ;;
+  [0-9][0-9]) kind=section value=$target ;;
+  [0-9]) kind=section value=0$target ;;
+  *) die "대상은 NN, all, project <name> 중 하나다" ;;
+esac
+case $lang in
+  go) run_go "$kind" "$value" "$@" ;;
+  kotlin) run_kotlin "$kind" "$value" "$@" ;;
+  python) run_python "$kind" "$value" "$@" ;;
+  *) usage ;;
+esac
