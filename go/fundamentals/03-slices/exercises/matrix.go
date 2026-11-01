@@ -9,22 +9,20 @@ type Matrix struct {
 
 // NewMatrix는 0으로 채운 행렬을 만든다. 힙 할당은 backing array 한 번이면 충분하다.
 func NewMatrix(rows, cols int) *Matrix {
-	// TODO: 구현하세요
-	return &Matrix{}
+	return &Matrix{rows: rows, cols: cols, data: make([]float64, rows*cols)}
 }
 
 func (m *Matrix) At(r, c int) float64 {
-	// TODO: 구현하세요
-	return 0
+	return m.data[r*m.cols+c]
 }
 
 func (m *Matrix) Set(r, c int, v float64) {
-	// TODO: 구현하세요
+	m.data[r*m.cols+c] = v
 }
 
 // Row는 r행을 복사 없이 보여 준다. 호출자가 결과에 append해도
 // 다음 행(r+1)이 바뀌면 안 된다.
 func (m *Matrix) Row(r int) []float64 {
-	// TODO: 구현하세요
-	return nil
+	lo, hi := r*m.cols, (r+1)*m.cols
+	return m.data[lo:hi:hi]
 }

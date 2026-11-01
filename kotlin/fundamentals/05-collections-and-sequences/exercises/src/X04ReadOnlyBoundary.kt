@@ -8,7 +8,7 @@ class Playlist {
 
     val size: Int get() = songs.size
 
-    val tracks: List<String> get() = TODO("X04-1")
+    val tracks: List<String> get() = songs.toList()
 }
 
 /**
@@ -16,4 +16,4 @@ class Playlist {
  * 할당 예산: 단어 "종류" 수에 비례해야 한다 (전체 단어 수에 비례하면 안 됨).
  * 힌트: groupBy 와 groupingBy 는 무엇이 다른가? Map<String, Int> 의 값을 +1 할 때 무슨 일이 생기나?
  */
-fun wordCounts(words: List<String>): Map<String, Int> = TODO("X04-2")
+fun wordCounts(words: List<String>): Map<String, Int> = words.groupingBy { it }.eachCount()

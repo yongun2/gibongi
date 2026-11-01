@@ -13,19 +13,60 @@ class Pipe<T> private constructor(private val newIterator: () -> Iterator<T>) {
     operator fun iterator(): Iterator<T> = newIterator()
 
     /** predicate 를 통과한 원소만. hasNext() 를 여러 번 불러도 원소를 건너뛰면 안 된다. */
-    fun filter(predicate: (T) -> Boolean): Pipe<T> = TODO("X01-1")
+    fun filter(predicate: (T) -> Boolean): Pipe<T> = Pipe {
+        val upstream = newIterator()
+        object : Iterator<T> {
+            private var ready = false
+            private var item: T? = null
+            override fun hasNext(): Boolean {
+                while (!ready && upstream.hasNext()) {
+                    val x = upstream.next()
+                    if (predicate(x)) { item = x; ready = true }
+                }
+                return ready
+            }
+            override fun next(): T {
+                if (!hasNext()) throw NoSuchElementException()
+                ready = false
+                @Suppress("UNCHECKED_CAST") return item as T
+            }
+        }
+    }
 
-    fun <R> map(transform: (T) -> R): Pipe<R> = TODO("X01-2")
+    fun <R> map(transform: (T) -> R): Pipe<R> = Pipe {
+        val upstream = newIterator()
+        object : Iterator<R> {
+            override fun hasNext() = upstream.hasNext()
+            override fun next(): R = transform(upstream.next())
+        }
+    }
 
     /** n 개를 내보낸 뒤에는 상류(upstream) iterator 를 더 당기지 않는다. */
-    fun take(n: Int): Pipe<T> = TODO("X01-3")
+    fun take(n: Int): Pipe<T> = Pipe {
+        val upstream = newIterator()
+        object : Iterator<T> {
+            private var left = n
+            override fun hasNext() = left > 0 && upstream.hasNext()
+            override fun next(): T {
+                if (left <= 0) throw NoSuchElementException()
+                left--
+                return upstream.next()
+            }
+        }
+    }
 
-    fun toList(): List<T> = TODO("X01-4")
+    fun toList(): List<T> = buildList { for (x in this@Pipe) add(x) }
 
     companion object {
         fun <T> from(source: Iterable<T>): Pipe<T> = Pipe { source.iterator() }
 
         /** seed, next(seed), next(next(seed)), ... 로 끝없이 이어지는 Pipe. */
-        fun <T : Any> generate(seed: T, next: (T) -> T): Pipe<T> = TODO("X01-5")
+        fun <T : Any> generate(seed: T, next: (T) -> T): Pipe<T> = Pipe {
+            object : Iterator<T> {
+                private var current: T? = null
+                override fun hasNext() = true
+                override fun next(): T = (current?.let(next) ?: seed).also { current = it }
+            }
+        }
     }
 }

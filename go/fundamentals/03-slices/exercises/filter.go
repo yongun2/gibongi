@@ -5,6 +5,12 @@ package exercises
 //   - 결과 뒤에 남은 칸(s[len(결과):len(s)])은 zero value로 지운다.
 //     (Go 1.22부터 slices.DeleteFunc가 하는 일과 같다. 포인터 원소였다면 GC를 위해 필수.)
 func FilterInPlace(s []int, keep func(int) bool) []int {
-	// TODO: 구현하세요
-	return nil
+	out := s[:0]
+	for _, v := range s {
+		if keep(v) {
+			out = append(out, v)
+		}
+	}
+	clear(s[len(out):])
+	return out
 }
